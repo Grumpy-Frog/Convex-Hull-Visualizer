@@ -269,7 +269,7 @@ def gameLoop(convex_hull_points, points):
                                     1)
         """
         pygame.display.update()
-        clock.tick(1)
+        clock.tick(60)
 
     pygame.quit()
     quit()
