@@ -3,9 +3,39 @@ from typing import Iterable
 
 import pygame
 
+################################## All global variables #########################################################################################################################
+points_inputs = [
+    (0, 3),
+    (2, 2),
+    (1, 1),
+    (2, 1),
+    (3, 0),
+    (0, 0),
+    (3, 3),
+    (2, -1),
+    (2, -4),
+    (1, -3),
+]
+
+white = (255, 255, 255)
+yellow = (255, 255, 102)
+black = (0, 0, 0)
+red = (213, 50, 80)
+green = (0, 255, 0)
+blue = (50, 153, 213)
+
+pygame.init()
+dis_width = 600
+dis_height = 400
+dis = pygame.display.set_mode((dis_width, dis_height))
+pygame.display.set_caption('Convex Hull')
+clock = pygame.time.Clock()
+
+simulate=False
+
+#########################################################################################################################
 
 class Point:
-
     def __init__(self, x, y):
         self.x = float(x)
         self.y = float(y)
@@ -79,6 +109,7 @@ def upper_or_lower(a: Point, b: Point, c: Point) -> float:
 
 def construct_hull(points: list[Point], left_most_point: Point, right_most_point: Point,
                    convex_hull_points: set[Point]):
+    simulatetion_loop(convex_hull_points, points_inputs, left_most_point, right_most_point,None)
     if points:
         extreme_point = None
         extreme_point_distance = float("-inf")
@@ -95,6 +126,7 @@ def construct_hull(points: list[Point], left_most_point: Point, right_most_point
                     extreme_point_distance = distance
 
         if extreme_point:
+            simulatetion_loop(convex_hull_points, points_inputs, left_most_point,right_most_point,extreme_point)
             construct_hull(candidate_points, left_most_point, extreme_point, convex_hull_points)
             convex_hull_points.add(extreme_point)
             construct_hull(candidate_points, extreme_point, right_most_point, convex_hull_points)
@@ -126,19 +158,38 @@ def find_convex_hull(points: list[Point]) -> list[Point]:
     return sorted(convex_hull_points)
 
 
-white = (255, 255, 255)
-yellow = (255, 255, 102)
-black = (0, 0, 0)
-red = (213, 50, 80)
-green = (0, 255, 0)
-blue = (50, 153, 213)
+def simulatetion_loop(convex_hull_points, points, left_most_point: Point, right_most_point: Point, extreme_point:Point):
+    game_over = False
+    if simulate==False:
+        game_over=True
 
-pygame.init()
-dis_width = 600
-dis_height = 400
-dis = pygame.display.set_mode((dis_width, dis_height))
-pygame.display.set_caption('Convex Hull')
-clock = pygame.time.Clock()
+    while not game_over:
+        dis.fill(black)
+
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                game_over = True
+
+        mult = 25
+        add = 200
+        if points:
+            for p in points:
+                pygame.draw.circle(dis, blue, (p[0] * mult + add, p[1] * mult + add), 2)
+        for p in convex_hull_points:
+            pygame.draw.circle(dis, red, (p.x * mult + add, p.y * mult + add), 2)
+
+        if extreme_point:
+            pygame.draw.circle(dis, yellow, (extreme_point.x * mult + add, extreme_point.y * mult + add), 2)
+        pygame.draw.line(dis, green,
+                         (left_most_point.x * mult + add, left_most_point.y * mult + add), (
+                             right_most_point.x * mult + add, right_most_point.y * mult + add),
+                         1)
+        pygame.display.update()
+        clock.tick(1)
+        break
+
+def distance_of_two_points(a:Point,b:Point):
+    return math.sqrt((a.x-b.x)**2+(a.y-b.y)**2)
 
 
 def gameLoop(convex_hull_points, points):
@@ -147,17 +198,6 @@ def gameLoop(convex_hull_points, points):
 
     while not game_over:
         dis.fill(black)
-        while game_close == True:
-            dis.fill(white)
-            pygame.display.update()
-
-            for event in pygame.event.get():
-                if event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_q:
-                        game_over = True
-                        game_close = False
-                    if event.key == pygame.K_c:
-                        gameLoop()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -165,61 +205,39 @@ def gameLoop(convex_hull_points, points):
 
         mult = 25
         add = 200
-        for p in points:
-            pygame.draw.circle(dis, blue, (p[0] * mult + 200, p[1] * mult + 200), 2)
+        if points:
+            for p in points:
+                pygame.draw.circle(dis, blue, (p[0] * mult + add, p[1] * mult + add), 2)
         for p in convex_hull_points:
-            pygame.draw.circle(dis, red, (p.x * mult + 200, p.y * mult + 200), 2)
+            pygame.draw.circle(dis, red, (p.x * mult + add, p.y * mult + add), 2)
+
 
         ### Unfinished part is here
-        n=len(convex_hull_points)
-        for i in range(0, n):
-            min_dis = 99999
-            next_point: Point = None
-            for j in range(0, len(convex_hull_points)):
-                if not i == j:
-                    distance = math.dist((convex_hull_points[i].x,convex_hull_points[i].y),
-                                         (convex_hull_points[j].x,convex_hull_points[j].y))
-                    if (min_dis > distance):
-                        min_dis=distance
-                        next_point = convex_hull_points[j]
 
+        for i in range(1, len(convex_hull_points)-1):
             pygame.draw.line(dis, green,
-                             (convex_hull_points[i].x * mult + 200, convex_hull_points[i].y * mult + 200), (
-                                 convex_hull_points[j].x * mult + 200, convex_hull_points[j].y * mult + 200),
+                             (convex_hull_points[i].x * mult + add, convex_hull_points[i].y * mult + add), (
+                                 convex_hull_points[i+1].x * mult + add, convex_hull_points[i+1].y * mult + add),
                              1)
-            convex_hull_points.remove(next_point)
-            n=len(convex_hull_points)
 
 
         """
         pygame.draw.line(dis, green,
-                                    (convex_hull_points[i].x * mult + 200, convex_hull_points[i].y * mult + 200), (
-                                    convex_hull_points[j].x * mult + 200, convex_hull_points[j].y * mult + 200),
+                                    (convex_hull_points[i].x * mult + add, convex_hull_points[i].y * mult + add), (
+                                    convex_hull_points[j].x * mult + add, convex_hull_points[j].y * mult + add),
                                     1)
         """
         pygame.display.update()
         clock.tick(5)
+
     pygame.quit()
     quit()
 
 
 def main():
-    points = [
-        (0, 3),
-        (2, 2),
-        (1, 1),
-        (2, 1),
-        (3, 0),
-        (0, 0),
-        (3, 3),
-        (2, -1),
-        (2, -4),
-        (1, -3),
-    ]
-
-    result = find_convex_hull(points)
+    result = find_convex_hull(points_inputs)
     print(result)
-    gameLoop(result, points)
+    gameLoop(result, points_inputs)
 
 
 if __name__ == "__main__":
